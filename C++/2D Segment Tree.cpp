@@ -1,118 +1,96 @@
 #include <bits/stdc++.h>
 using namespace std;
-class SegmentTree2D{
-     vector< vector<int>> st;       // to store 2D segment tree
-     vector< vector<int>> mat;      // to store matrix
-    int m, n;
-
-public:
-    SegmentTree2D( vector< vector<int>> &matrix){
-        mat = matrix;
-        m = mat.size();
-        n = mat[0].size();
-        // initialize st
-        st.assign(4 * m,  vector<int> (4 * n, 0));
-        build2D(1, 0, m - 1);
+#define N 1010
+#define M 1010
+int t[4*N][4*M] = {0}, a[N][M] = {0};
+int n, m, q;
+void build_y(int vx, int lx, int rx, int vy, int ly, int ry) {
+    if (ly == ry) {
+        if (lx == rx)
+            t[vx][vy] = a[lx][ly];
+        else
+            t[vx][vy] = t[vx*2][vy] + t[vx*2+1][vy];
+    } else {
+        int my = (ly + ry) / 2;
+        build_y(vx, lx, rx, vy*2, ly, my);
+        build_y(vx, lx, rx, vy*2+1, my+1, ry);
+        t[vx][vy] = t[vx][vy*2] + t[vx][vy*2+1];
     }
+}
 
-    void build( vector<int> &segTree,  vector<int> &ar, int index, int L, int R){
-        if(L == R){
-            segTree[index] = ar[L];
-        }
-        else{
-        int mid = (L + R) / 2;
-        // 2*index will be left child
-        build(segTree, ar, 2*index, L, mid);
-        // 2*index + 1 will be right child
-        build(segTree, ar, 2*index + 1, mid + 1, R);
-        // finally, add the values from two children into the parent
-        segTree[index] = segTree[2*index] + segTree[2*index + 1];
-        }
+void build_x(int vx=1, int lx=0, int rx=n-1) {
+    if (lx != rx) {
+        int mx = (lx + rx) / 2;
+        build_x(vx*2, lx, mx);
+        build_x(vx*2+1, mx+1, rx);
     }
+    build_y(vx, lx, rx, 1, 0, m-1);
+}
 
-    int query( vector<int> &segTree, int index, int L, int R, int start, int end){
-        if(start > R || end < L){
-            // -1 used as null value here
-            return -1;
-        }
+int query_y(int vx, int vy, int tly, int try_, int ly, int ry) {
+    if (ly > ry)
+        return 0;
+    if (ly == tly && try_ == ry)
+        return t[vx][vy];
+    int tmy = (tly + try_) / 2;
+    return query_y(vx, vy*2, tly, tmy, ly, min(ry, tmy))
+         + query_y(vx, vy*2+1, tmy+1, try_, max(ly, tmy+1), ry);
+}
 
-        if (L >= start and R <= end)
-            return segTree[index];
+int query_x(int lx, int rx, int ly, int ry, int vx=1, int tlx=0, int trx=n-1) {
+    if (lx > rx)
+        return 0;
+    if (lx == tlx && trx == rx)
+        return query_y(vx, 1, 0, m-1, ly, ry);
+    int tmx = (tlx + trx) / 2;
+    return query_x(lx, min(rx, tmx), ly, ry, vx*2, tlx, tmx)
+         + query_x(max(lx, tmx+1), rx, ly, ry, vx*2+1, tmx+1, trx);
+}
 
-        int mid = (L + R) / 2;
-        int left = query(segTree, 2*index, L, mid, start, end);
-        int right = query(segTree, 2*index + 1, mid + 1, R, start, end);
-
-        if(left == -1)
-            return right;
-        if(right == -1)
-            return left;
-        return left + right;
+void update_y(int lx, int rx, int vy, int ly, int ry, int x, int y, int new_val, int vx=1) {
+    if (ly == ry) {
+        if (lx == rx)
+            t[vx][vy] = new_val;
+        else
+            t[vx][vy] = t[vx*2][vy] + t[vx*2+1][vy];
+    } else {
+        int my = (ly + ry) / 2;
+        if (y <= my)
+            update_y(vx, lx, rx, vy*2, ly, my, x, y, new_val);
+        else
+            update_y(vx, lx, rx, vy*2+1, my+1, ry, x, y, new_val);
+        t[vx][vy] = t[vx][vy*2] + t[vx][vy*2+1];
     }
+}
 
-    void build2D(int index, int L, int R){
-        // if at leaf node, build a 1D segment tree
-        if(L == R)
-            build(st[index], mat[L], 1, 0, n - 1);
-
-        else{
-            int mid = (L + R) / 2;
-
-            // build left child segment tree
-            build2D(2*index, L, mid);
-            // build right child segment tree
-            build2D(2*index + 1, mid + 1, R);
-
-            // merge left and right children
-            for(int i = 0; i < st[index].size(); ++i)
-                st[index][i] = st[2*index][i] + st[2*index + 1][i];
-        }
+void update_x(int x, int y, int new_val, int vx=1, int lx=0, int rx=n-1) {
+    if (lx != rx) {
+        int mx = (lx + rx) / 2;
+        if (x <= mx)
+            update_x(x, y, new_val, vx*2, lx, mx);
+        else
+            update_x(x, y, new_val, vx*2+1, mx+1, rx);
     }
-
-    int query2D(int index, int L, int R, int x1, int y1, int x2, int y2){
-        if(L > x2 || R < x1)
-            return -1;
-
-        if(L >= x1 and R <= x2)
-            return query(st[index], 1, 0, n - 1, y1, y2);
-
-        int mid = (L + R) / 2;
-
-        // query left child. Returned value will be integer
-        int left = query2D(2*index, L, mid, x1, y1, x2, y2);
-        // query right child. Returned value will be integer
-        int right = query2D(2*index + 1, mid + 1, R, x1, y1, x2, y2);
-
-        if(left == -1)
-            return right;
-        if(right == -1)
-            return left;
-
-        return left + right;
-    }
-
-    // Main query function
-    int query(int x1, int y1, int x2, int y2){
-        return query2D(1, 0, m - 1, x1, y1, x2, y2);
-    }
-};
+    update_y(vx, lx, rx, 1, 0, m-1, x, y, new_val);
+}
 
 int main(){
-    vector< vector<int>> matrix = { vector<int>({1, 1, 2, 2}),
-                               vector<int>({3, 3, 4, 4}),
-                               vector<int>({5, 5, 6, 6}),
-                               vector<int>({7, 7, 8, 8})};
-
-    SegmentTree2D st(matrix);
-
-    cout << "Matrix is\n";
-    for(int i = 0; i < 4; ++i){
-        for(int j = 0; j < 4; ++j)
-             cout << matrix[i][j] << ' ';
-         cout << '\n';
+    ios_base::sync_with_stdio(0);
+	cin.tie(0);
+    cin >> n >> q;
+    m = n;
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < n; j++){
+            char c;
+            cin >> c;
+            a[i][j] = c == '*'? 1 : 0;
+        }
     }
-
-    cout << "Sum of sub-matrix ((1, 1), (3, 3)) is " << st.query(1, 1, 3, 3) << '\n';
-    cout << "Sum of row 2 is " << st.query(2, 0, 2, 3) << '\n';
+    build_x();
+    while(q--){
+        int y1, x1, y2, x2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        cout << query_x(x1-1,x2-1,y1-1,y2-1) << endl;
+    }
     return 0;
 }
