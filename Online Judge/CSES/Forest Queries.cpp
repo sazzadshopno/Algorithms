@@ -47,7 +47,7 @@ int query_x(int lx, int rx, int ly, int ry, int vx=1, int tlx=0, int trx=n-1) {
          + query_x(max(lx, tmx+1), rx, ly, ry, vx*2+1, tmx+1, trx);
 }
 
-void update_y(int lx, int rx, int vy, int ly, int ry, int x, int y, int new_val, int vx=1) {
+void update_y(int vx, int lx, int rx, int vy, int ly, int ry, int x, int y, int new_val) {
     if (ly == ry) {
         if (lx == rx)
             t[vx][vy] = new_val;
