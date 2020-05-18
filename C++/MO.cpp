@@ -36,6 +36,7 @@ int main(){
         cin >> query[i].L >> query[i].R;
         query[i].index = i;
     }
+    
     sort(query, query+q);
     int L=0, R=-1;
     for(int i=0;i<q;i++){
