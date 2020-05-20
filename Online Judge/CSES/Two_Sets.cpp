@@ -3,6 +3,10 @@ using namespace std;
 using ll = int64_t;
 
 int main(){
+    #ifndef ONLINE_JUDGE
+        freopen("in.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    #endif
     ios_base::sync_with_stdio(0);
 	cin.tie(0);
 	ll n;
