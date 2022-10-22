@@ -1,6 +1,7 @@
 import 'dart:math';
 
-const num mx = 6;
+const int mx = 6;
+
 List<int> arr = List.filled(mx, 0), tree = List.filled(mx, 0);
 void update(int idx, int val, int n) {
   while (idx <= n) {
@@ -19,7 +20,7 @@ int query(int idx) {
 }
 
 int main() {
-  num n = 5;
+  int n = 5;
   for (int i = 1; i <= n; i++) {
     arr[i] = Random().nextInt(150);
     update(i, arr[i], n);
